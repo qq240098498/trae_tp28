@@ -1,9 +1,10 @@
-import type { Device, WiFi, ConnectedDeviceRecord, RouterCapacityConfig } from '@/types';
+import type { Device, WiFi, ConnectedDeviceRecord, RouterCapacityConfig, RouterMemo } from '@/types';
 
 const DEVICES_KEY = 'home_net_devices';
 const WIFIS_KEY = 'home_net_wifis';
 const CONNECTED_DEVICES_KEY = 'home_net_connected_devices';
 const ROUTER_CAPACITY_KEY = 'home_net_router_capacity';
+const ROUTER_MEMOS_KEY = 'home_net_router_memos';
 
 export const loadDevices = (): Device[] => {
   try {
@@ -59,4 +60,17 @@ export const loadRouterCapacity = (): RouterCapacityConfig[] => {
 
 export const saveRouterCapacity = (configs: RouterCapacityConfig[]): void => {
   localStorage.setItem(ROUTER_CAPACITY_KEY, JSON.stringify(configs));
+};
+
+export const loadRouterMemos = (): RouterMemo[] => {
+  try {
+    const data = localStorage.getItem(ROUTER_MEMOS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveRouterMemos = (memos: RouterMemo[]): void => {
+  localStorage.setItem(ROUTER_MEMOS_KEY, JSON.stringify(memos));
 };

@@ -126,3 +126,44 @@ export const connectedDeviceCategoryIcons: Record<ConnectedDeviceCategory, strin
   wearable: '⌚',
   other: '🔌'
 };
+
+export interface RouterMemo {
+  id: string;
+  router_name: string;
+  admin_address: string;
+  admin_username?: string;
+  admin_password_encrypted: string;
+  broadband_account?: string;
+  broadband_password_encrypted?: string;
+  wifi_id?: string;
+  model?: string;
+  location?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RouterMemoFormData {
+  router_name: string;
+  admin_address: string;
+  admin_username?: string;
+  admin_password: string;
+  broadband_account?: string;
+  broadband_password?: string;
+  wifi_id?: string;
+  model?: string;
+  location?: string;
+  notes?: string;
+}
+
+export interface ResetGuideStep {
+  title: string;
+  description: string;
+  icon: string;
+  tips?: string[];
+}
+
+export interface ResetGuide {
+  routerMemoId: string;
+  steps: ResetGuideStep[];
+}

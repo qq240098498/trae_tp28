@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Device, WiFi, DeviceFormData, WiFiFormData, ConnectedDeviceRecord, ConnectedDeviceRecordFormData, RouterCapacityConfig, RouterCapacityConfigFormData } from '@/types';
-import { loadDevices, saveDevices, loadWifis, saveWifis, generateId, loadConnectedDevices, saveConnectedDevices, loadRouterCapacity, saveRouterCapacity } from '@/utils/storage';
+import type { Device, WiFi, DeviceFormData, WiFiFormData, ConnectedDeviceRecord, ConnectedDeviceRecordFormData, RouterCapacityConfig, RouterCapacityConfigFormData, RouterMemo, RouterMemoFormData } from '@/types';
+import { loadDevices, saveDevices, loadWifis, saveWifis, generateId, loadConnectedDevices, saveConnectedDevices, loadRouterCapacity, saveRouterCapacity, loadRouterMemos, saveRouterMemos } from '@/utils/storage';
 import { encrypt, deriveKey, hashPassword, setMasterPasswordHash, verifyMasterPassword, isMasterPasswordSet } from '@/utils/encryption';
 import { mockDevices, mockWifis } from '@/utils/mockData';
 
@@ -9,6 +9,7 @@ interface StoreState {
   wifis: WiFi[];
   connectedDevices: ConnectedDeviceRecord[];
   routerCapacityConfigs: RouterCapacityConfig[];
+  routerMemos: RouterMemo[];
   loading: boolean;
   encryptionKey: string | null;
   masterPasswordSet: boolean;
@@ -28,6 +29,9 @@ interface StoreState {
   addRouterCapacity: (data: RouterCapacityConfigFormData) => void;
   updateRouterCapacity: (id: string, data: RouterCapacityConfigFormData) => void;
   deleteRouterCapacity: (id: string) => void;
+  addRouterMemo: (data: RouterMemoFormData) => boolean;
+  updateRouterMemo: (id: string, data: RouterMemoFormData) => boolean;
+  deleteRouterMemo: (id: string) => void;
   loadMockData: () => void;
 }
 
@@ -36,6 +40,7 @@ export const useStore = create<StoreState>((set, get) => ({
   wifis: [],
   connectedDevices: [],
   routerCapacityConfigs: [],
+  routerMemos: [],
   loading: false,
   encryptionKey: null,
   masterPasswordSet: false,
@@ -47,11 +52,13 @@ export const useStore = create<StoreState>((set, get) => ({
     const savedWifis = loadWifis();
     const savedConnectedDevices = loadConnectedDevices();
     const savedRouterCapacity = loadRouterCapacity();
+    const savedRouterMemos = loadRouterMemos();
     set({
       devices: savedDevices.length > 0 ? savedDevices : [],
       wifis: savedWifis.length > 0 ? savedWifis : [],
       connectedDevices: savedConnectedDevices.length > 0 ? savedConnectedDevices : [],
       routerCapacityConfigs: savedRouterCapacity.length > 0 ? savedRouterCapacity : [],
+      routerMemos: savedRouterMemos.length > 0 ? savedRouterMemos : [],
       masterPasswordSet: hasPassword
     });
   },
@@ -214,6 +221,65 @@ export const useStore = create<StoreState>((set, get) => ({
     const routerCapacityConfigs = get().routerCapacityConfigs.filter(c => c.id !== id);
     set({ routerCapacityConfigs });
     saveRouterCapacity(routerCapacityConfigs);
+  },
+
+  addRouterMemo: (data: RouterMemoFormData): boolean => {
+    const key = get().encryptionKey;
+    if (!key) return false;
+
+    const now = new Date().toISOString();
+    const newMemo: RouterMemo = {
+      id: generateId(),
+      router_name: data.router_name,
+      admin_address: data.admin_address,
+      admin_username: data.admin_username,
+      admin_password_encrypted: encrypt(data.admin_password, key),
+      broadband_account: data.broadband_account,
+      broadband_password_encrypted: data.broadband_password ? encrypt(data.broadband_password, key) : undefined,
+      wifi_id: data.wifi_id,
+      model: data.model,
+      location: data.location,
+      notes: data.notes,
+      created_at: now,
+      updated_at: now
+    };
+    const routerMemos = [...get().routerMemos, newMemo];
+    set({ routerMemos });
+    saveRouterMemos(routerMemos);
+    return true;
+  },
+
+  updateRouterMemo: (id: string, data: RouterMemoFormData): boolean => {
+    const key = get().encryptionKey;
+    if (!key) return false;
+
+    const routerMemos = get().routerMemos.map(m =>
+      m.id === id
+        ? {
+            ...m,
+            router_name: data.router_name,
+            admin_address: data.admin_address,
+            admin_username: data.admin_username,
+            admin_password_encrypted: encrypt(data.admin_password, key),
+            broadband_account: data.broadband_account,
+            broadband_password_encrypted: data.broadband_password ? encrypt(data.broadband_password, key) : undefined,
+            wifi_id: data.wifi_id,
+            model: data.model,
+            location: data.location,
+            notes: data.notes,
+            updated_at: new Date().toISOString()
+          }
+        : m
+    );
+    set({ routerMemos });
+    saveRouterMemos(routerMemos);
+    return true;
+  },
+
+  deleteRouterMemo: (id: string) => {
+    const routerMemos = get().routerMemos.filter(m => m.id !== id);
+    set({ routerMemos });
+    saveRouterMemos(routerMemos);
   },
 
   loadMockData: () => {
