@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Edit2, Trash2, X, AlertTriangle, CheckCircle, Smartphone, Monitor, Home, Tablet, Tv, Watch, Plug, Settings, Cpu, Minus, PieChart } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, AlertTriangle, CheckCircle, Smartphone, Monitor, Home, Tablet, Tv, Watch, Plug, Settings, Cpu, Minus, PieChart, Search, Filter, X as XIcon } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { StatCard } from '@/components/StatCard';
 import type { ConnectedDeviceRecord, ConnectedDeviceRecordFormData, RouterCapacityConfig, RouterCapacityConfigFormData, ConnectedDeviceCategory } from '@/types';
@@ -54,6 +54,32 @@ export function ConnectedDevices() {
   const [capacityMaxDevices, setCapacityMaxDevices] = useState(30);
   const [capacityWifiId, setCapacityWifiId] = useState<string | undefined>(undefined);
   const [capacityNotes, setCapacityNotes] = useState('');
+
+  const [filterCategory, setFilterCategory] = useState<ConnectedDeviceCategory | 'all'>('all');
+  const [filterWifiId, setFilterWifiId] = useState<string | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredDevices = useMemo(() => {
+    let result = connectedDevices;
+    if (filterCategory !== 'all') {
+      result = result.filter(d => d.category === filterCategory);
+    }
+    if (filterWifiId !== 'all') {
+      if (filterWifiId === 'none') {
+        result = result.filter(d => d.wifi_id === undefined);
+      } else {
+        result = result.filter(d => d.wifi_id === filterWifiId);
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(d =>
+        d.name.toLowerCase().includes(q) ||
+        (d.notes && d.notes.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [connectedDevices, filterCategory, filterWifiId, searchQuery]);
 
   const totalDevices = useMemo(() => {
     return connectedDevices.reduce((sum, d) => sum + d.count, 0);
@@ -394,22 +420,103 @@ export function ConnectedDevices() {
       )}
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-sm font-bold text-white font-display tracking-tight flex items-center gap-1.5">
             <PieChart className="w-4 h-4 text-violet-400" />
             连接记录
           </h2>
-          {connectedDevices.length > 0 && (
-            <span className="text-[11px] text-white/30">
-              共 {connectedDevices.length} 条记录
-            </span>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {connectedDevices.length > 0 && (
+              <span className="text-[11px] text-white/30 mr-1">
+                共 {filteredDevices.length} / {connectedDevices.length} 条
+              </span>
+            )}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="搜索设备..."
+                className="pl-8 pr-8 py-1.5 w-40 sm:w-48 bg-black/20 border border-white/[0.06] rounded-lg text-xs text-white placeholder-white/20 focus:outline-none focus:border-accent-teal/40 focus:ring-1 focus:ring-accent-teal/20 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-white/[0.08] text-white/20 hover:text-white/50 transition-colors"
+                >
+                  <XIcon className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <select
+              value={filterWifiId}
+              onChange={e => setFilterWifiId(e.target.value)}
+              className="px-2.5 py-1.5 bg-black/20 border border-white/[0.06] rounded-lg text-xs text-white/70 focus:outline-none focus:border-accent-teal/40 focus:ring-1 focus:ring-accent-teal/20 transition-all appearance-none cursor-pointer pr-7"
+            >
+              <option value="all">全部WiFi</option>
+              <option value="none">未关联WiFi</option>
+              {wifis.map(w => (
+                <option key={w.id} value={w.id}>{w.ssid}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {connectedDevices.length > 0 ? (
+        {connectedDevices.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setFilterCategory('all')}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${
+                filterCategory === 'all'
+                  ? 'bg-accent-teal/15 text-accent-teal border-accent-teal/30'
+                  : 'bg-black/10 text-white/40 border-white/[0.04] hover:border-white/[0.1] hover:text-white/60'
+              }`}
+            >
+              全部
+            </button>
+            {connectedDeviceCategories.map(cat => {
+              const CatIcon = categoryIcons[cat];
+              const count = categoryStats[cat];
+              if (count === 0 && filterCategory !== cat) return null;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${
+                    filterCategory === cat
+                      ? 'bg-accent-teal/15 text-accent-teal border-accent-teal/30'
+                      : 'bg-black/10 text-white/40 border-white/[0.04] hover:border-white/[0.1] hover:text-white/60'
+                  }`}
+                >
+                  <CatIcon className="w-3 h-3" />
+                  {connectedDeviceCategoryLabels[cat]}
+                  <span className={filterCategory === cat ? 'text-accent-teal/70' : 'text-white/20'}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+            {(filterCategory !== 'all' || filterWifiId !== 'all' || searchQuery) && (
+              <button
+                onClick={() => {
+                  setFilterCategory('all');
+                  setFilterWifiId('all');
+                  setSearchQuery('');
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium text-red-400/70 hover:text-red-400 border border-red-500/10 hover:border-red-500/20 transition-all"
+              >
+                <XIcon className="w-3 h-3" />
+                清除筛选
+              </button>
+            )}
+          </div>
+        )}
+
+        {filteredDevices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {connectedDeviceCategories.map(category => {
-              const categoryRecords = connectedDevices.filter(d => d.category === category);
+              const categoryRecords = filteredDevices.filter(d => d.category === category);
               if (categoryRecords.length === 0) return null;
               const categoryTotal = categoryRecords.reduce((sum, d) => sum + d.count, 0);
               const Icon = categoryIcons[category];
@@ -478,7 +585,7 @@ export function ConnectedDevices() {
               );
             })}
           </div>
-        ) : (
+        ) : connectedDevices.length === 0 ? (
           <div className="text-center py-16 bg-white/[0.01] rounded-xl border border-white/[0.04]">
             <div className="w-12 h-12 rounded-xl bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
               <Cpu className="w-6 h-6 text-white/10" />
@@ -493,6 +600,27 @@ export function ConnectedDevices() {
             >
               <Plus className="w-3.5 h-3.5" />
               添加第一条记录
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-white/[0.01] rounded-xl border border-white/[0.04]">
+            <div className="w-12 h-12 rounded-xl bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+              <Filter className="w-6 h-6 text-white/10" />
+            </div>
+            <p className="text-sm text-white/30 mb-2">没有符合筛选条件的记录</p>
+            <p className="text-[11px] text-white/20 mb-4">
+              尝试更改筛选条件或清除筛选
+            </p>
+            <button
+              onClick={() => {
+                setFilterCategory('all');
+                setFilterWifiId('all');
+                setSearchQuery('');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-teal text-base-950 rounded-lg hover:bg-accent-tealLight transition-all text-xs font-semibold shadow-lg shadow-accent-teal/20"
+            >
+              <XIcon className="w-3.5 h-3.5" />
+              清除筛选条件
             </button>
           </div>
         )}
