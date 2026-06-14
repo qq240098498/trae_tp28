@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Router, Wifi, Key, Lock, Unlock } from 'lucide-react';
+import { LayoutDashboard, Router, Wifi, Key, Lock, Unlock, Smartphone } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ export function Sidebar({ onLock }: SidebarProps) {
   const navItems = [
     { to: '/', label: '网络总览', icon: LayoutDashboard },
     { to: '/devices', label: '设备管理', icon: Router },
+    { to: '/connected', label: '连接状态', icon: Smartphone },
     { to: '/wifi', label: 'WiFi 管理', icon: Wifi },
     { to: '/passwords', label: '密码中心', icon: Key },
   ];

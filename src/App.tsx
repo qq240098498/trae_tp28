@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Devices } from '@/pages/Devices';
 import { WiFi } from '@/pages/WiFi';
 import { Passwords } from '@/pages/Passwords';
+import { ConnectedDevices } from '@/pages/ConnectedDevices';
 import { useStore } from '@/store/useStore';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/devices" element={<Devices />} />
           <Route path="/wifi" element={<WiFi />} />
           <Route path="/passwords" element={<Passwords />} />
+          <Route path="/connected" element={<ConnectedDevices />} />
         </Route>
       </Routes>
     </Router>

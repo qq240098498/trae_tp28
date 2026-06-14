@@ -68,3 +68,61 @@ export const wifiBandLabels: Record<WiFiBand, string> = {
   '5G': '5G',
   'dual': '双频'
 };
+
+export type ConnectedDeviceCategory = 'phone' | 'computer' | 'smarthome' | 'tablet' | 'tv' | 'wearable' | 'other';
+
+export interface ConnectedDeviceRecord {
+  id: string;
+  category: ConnectedDeviceCategory;
+  name: string;
+  count: number;
+  wifi_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConnectedDeviceRecordFormData {
+  category: ConnectedDeviceCategory;
+  name: string;
+  count: number;
+  wifi_id?: string;
+  notes?: string;
+}
+
+export interface RouterCapacityConfig {
+  id: string;
+  name: string;
+  max_devices: number;
+  wifi_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RouterCapacityConfigFormData {
+  name: string;
+  max_devices: number;
+  wifi_id?: string;
+  notes?: string;
+}
+
+export const connectedDeviceCategoryLabels: Record<ConnectedDeviceCategory, string> = {
+  phone: '手机',
+  computer: '电脑',
+  smarthome: '智能家居',
+  tablet: '平板',
+  tv: '电视/盒子',
+  wearable: '可穿戴设备',
+  other: '其他'
+};
+
+export const connectedDeviceCategoryIcons: Record<ConnectedDeviceCategory, string> = {
+  phone: '📱',
+  computer: '💻',
+  smarthome: '🏠',
+  tablet: '📟',
+  tv: '📺',
+  wearable: '⌚',
+  other: '🔌'
+};

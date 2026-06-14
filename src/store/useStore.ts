@@ -1,12 +1,14 @@
 import { create } from 'zustand';
-import type { Device, WiFi, DeviceFormData, WiFiFormData } from '@/types';
-import { loadDevices, saveDevices, loadWifis, saveWifis, generateId } from '@/utils/storage';
+import type { Device, WiFi, DeviceFormData, WiFiFormData, ConnectedDeviceRecord, ConnectedDeviceRecordFormData, RouterCapacityConfig, RouterCapacityConfigFormData } from '@/types';
+import { loadDevices, saveDevices, loadWifis, saveWifis, generateId, loadConnectedDevices, saveConnectedDevices, loadRouterCapacity, saveRouterCapacity } from '@/utils/storage';
 import { encrypt, deriveKey, hashPassword, setMasterPasswordHash, verifyMasterPassword, isMasterPasswordSet } from '@/utils/encryption';
 import { mockDevices, mockWifis } from '@/utils/mockData';
 
 interface StoreState {
   devices: Device[];
   wifis: WiFi[];
+  connectedDevices: ConnectedDeviceRecord[];
+  routerCapacityConfigs: RouterCapacityConfig[];
   loading: boolean;
   encryptionKey: string | null;
   masterPasswordSet: boolean;
@@ -20,12 +22,20 @@ interface StoreState {
   addWiFi: (data: WiFiFormData) => boolean;
   updateWiFi: (id: string, data: WiFiFormData) => boolean;
   deleteWiFi: (id: string) => void;
+  addConnectedDevice: (data: ConnectedDeviceRecordFormData) => void;
+  updateConnectedDevice: (id: string, data: ConnectedDeviceRecordFormData) => void;
+  deleteConnectedDevice: (id: string) => void;
+  addRouterCapacity: (data: RouterCapacityConfigFormData) => void;
+  updateRouterCapacity: (id: string, data: RouterCapacityConfigFormData) => void;
+  deleteRouterCapacity: (id: string) => void;
   loadMockData: () => void;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
   devices: [],
   wifis: [],
+  connectedDevices: [],
+  routerCapacityConfigs: [],
   loading: false,
   encryptionKey: null,
   masterPasswordSet: false,
@@ -33,22 +43,17 @@ export const useStore = create<StoreState>((set, get) => ({
   initStore: () => {
     const hasPassword = isMasterPasswordSet();
     set({ masterPasswordSet: hasPassword });
-    if (!hasPassword) {
-      const savedDevices = loadDevices();
-      const savedWifis = loadWifis();
-      set({
-        devices: savedDevices.length > 0 ? savedDevices : [],
-        wifis: savedWifis.length > 0 ? savedWifis : [],
-        masterPasswordSet: false
-      });
-    } else {
-      const savedDevices = loadDevices();
-      const savedWifis = loadWifis();
-      set({
-        devices: savedDevices.length > 0 ? savedDevices : [],
-        wifis: savedWifis.length > 0 ? savedWifis : [],
-      });
-    }
+    const savedDevices = loadDevices();
+    const savedWifis = loadWifis();
+    const savedConnectedDevices = loadConnectedDevices();
+    const savedRouterCapacity = loadRouterCapacity();
+    set({
+      devices: savedDevices.length > 0 ? savedDevices : [],
+      wifis: savedWifis.length > 0 ? savedWifis : [],
+      connectedDevices: savedConnectedDevices.length > 0 ? savedConnectedDevices : [],
+      routerCapacityConfigs: savedRouterCapacity.length > 0 ? savedRouterCapacity : [],
+      masterPasswordSet: hasPassword
+    });
   },
 
   setMasterPassword: (password: string): boolean => {
@@ -151,6 +156,64 @@ export const useStore = create<StoreState>((set, get) => ({
     const wifis = get().wifis.filter(w => w.id !== id);
     set({ wifis });
     saveWifis(wifis);
+  },
+
+  addConnectedDevice: (data: ConnectedDeviceRecordFormData) => {
+    const now = new Date().toISOString();
+    const newRecord: ConnectedDeviceRecord = {
+      id: generateId(),
+      ...data,
+      created_at: now,
+      updated_at: now
+    };
+    const connectedDevices = [...get().connectedDevices, newRecord];
+    set({ connectedDevices });
+    saveConnectedDevices(connectedDevices);
+  },
+
+  updateConnectedDevice: (id: string, data: ConnectedDeviceRecordFormData) => {
+    const connectedDevices = get().connectedDevices.map(r =>
+      r.id === id
+        ? { ...r, ...data, updated_at: new Date().toISOString() }
+        : r
+    );
+    set({ connectedDevices });
+    saveConnectedDevices(connectedDevices);
+  },
+
+  deleteConnectedDevice: (id: string) => {
+    const connectedDevices = get().connectedDevices.filter(r => r.id !== id);
+    set({ connectedDevices });
+    saveConnectedDevices(connectedDevices);
+  },
+
+  addRouterCapacity: (data: RouterCapacityConfigFormData) => {
+    const now = new Date().toISOString();
+    const newConfig: RouterCapacityConfig = {
+      id: generateId(),
+      ...data,
+      created_at: now,
+      updated_at: now
+    };
+    const routerCapacityConfigs = [...get().routerCapacityConfigs, newConfig];
+    set({ routerCapacityConfigs });
+    saveRouterCapacity(routerCapacityConfigs);
+  },
+
+  updateRouterCapacity: (id: string, data: RouterCapacityConfigFormData) => {
+    const routerCapacityConfigs = get().routerCapacityConfigs.map(c =>
+      c.id === id
+        ? { ...c, ...data, updated_at: new Date().toISOString() }
+        : c
+    );
+    set({ routerCapacityConfigs });
+    saveRouterCapacity(routerCapacityConfigs);
+  },
+
+  deleteRouterCapacity: (id: string) => {
+    const routerCapacityConfigs = get().routerCapacityConfigs.filter(c => c.id !== id);
+    set({ routerCapacityConfigs });
+    saveRouterCapacity(routerCapacityConfigs);
   },
 
   loadMockData: () => {

@@ -1,7 +1,9 @@
-import type { Device, WiFi } from '@/types';
+import type { Device, WiFi, ConnectedDeviceRecord, RouterCapacityConfig } from '@/types';
 
 const DEVICES_KEY = 'home_net_devices';
 const WIFIS_KEY = 'home_net_wifis';
+const CONNECTED_DEVICES_KEY = 'home_net_connected_devices';
+const ROUTER_CAPACITY_KEY = 'home_net_router_capacity';
 
 export const loadDevices = (): Device[] => {
   try {
@@ -31,4 +33,30 @@ export const saveWifis = (wifis: WiFi[]): void => {
 
 export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+export const loadConnectedDevices = (): ConnectedDeviceRecord[] => {
+  try {
+    const data = localStorage.getItem(CONNECTED_DEVICES_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveConnectedDevices = (records: ConnectedDeviceRecord[]): void => {
+  localStorage.setItem(CONNECTED_DEVICES_KEY, JSON.stringify(records));
+};
+
+export const loadRouterCapacity = (): RouterCapacityConfig[] => {
+  try {
+    const data = localStorage.getItem(ROUTER_CAPACITY_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveRouterCapacity = (configs: RouterCapacityConfig[]): void => {
+  localStorage.setItem(ROUTER_CAPACITY_KEY, JSON.stringify(configs));
 };
